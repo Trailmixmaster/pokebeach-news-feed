@@ -1,0 +1,35 @@
+name: Autonomous Market Sniper
+
+# 1. THE SCHEDULE
+on:
+  schedule:
+    - cron: '0 * * * *' # Runs at the top of every single hour (e.g., 1:00, 2:00)
+  workflow_dispatch: # Allows you to manually click a "Run" button in GitHub to test it
+
+jobs:
+  hunt-deals:
+    runs-on: ubuntu-latest
+
+    steps:
+      # 2. PULL THE CODE
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      # 3. SET UP THE SERVER
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install Backend Dependencies
+        run: npm install firebase-admin
+
+      # 4. UNLOCK THE VAULT
+      - name: Generate Secure Service Account Key
+        env:
+          FIREBASE_SECRET: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+        run: echo "$FIREBASE_SECRET" > serviceAccountKey.json
+
+      # 5. FIRE THE SNIPER
+      - name: Execute Deal Sniper
+        run: node deal-sniper.js

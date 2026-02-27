@@ -10,6 +10,8 @@
     "tail": "wrangler tail"
   },
   "dependencies": {
+    "firebase-admin": "^13.6.1",
+    "node-fetch": "^3.3.2",
     "node-html-parser": "^6.1.13"
   },
   "devDependencies": {

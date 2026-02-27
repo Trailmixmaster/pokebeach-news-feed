@@ -2,3 +2,5 @@ node_modules/
 wrangler.toml
 .dev.vars
 .wrangler/
+# FIREBASE ADMIN KEYS - DO NOT UPLOAD
+serviceAccountKey.json
