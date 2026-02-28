@@ -84,7 +84,7 @@ async function runSniper() {
               url: cheapestListing.itemAffiliateWebUrl || cheapestListing.itemWebUrl
             };
 
-            // 🚀 UPGRADED: Accept ANY card priced below AMV, and let the math sort out the winner
+            // Accept ANY card priced below AMV, and let the math sort out the winner
             if (discountPercent < 0) {
               const isSteal = discountPercent <= -10;
               const badge = isSteal ? "🔥 STEAL " : "✅ DEAL  ";
@@ -112,21 +112,24 @@ async function runSniper() {
       await delay(1000);
     }
 
-    // 5. Finalize and Save to Firebase
+    // 5. Finalize and Save to Firebase (MEMORY UPGRADE)
     console.log("\n==================================");
     console.log("🏆 DAILY DEALS SECURED");
     console.log("==================================");
-    console.log(`Tier 1 ($20-$50): ${bestDeals.tier1 ? bestDeals.tier1.name + ' (-' + Math.abs(bestDeals.tier1.discount).toFixed(1) + '%)' : 'No deal found'}`);
-    console.log(`Tier 2 ($50-$100): ${bestDeals.tier2 ? bestDeals.tier2.name + ' (-' + Math.abs(bestDeals.tier2.discount).toFixed(1) + '%)' : 'No deal found'}`);
-    console.log(`Tier 3 ($100+): ${bestDeals.tier3 ? bestDeals.tier3.name + ' (-' + Math.abs(bestDeals.tier3.discount).toFixed(1) + '%)' : 'No deal found'}`);
+    console.log(`Tier 1 ($20-$50): ${bestDeals.tier1 ? bestDeals.tier1.name + ' (-' + Math.abs(bestDeals.tier1.discount).toFixed(1) + '%)' : 'Keeping previous deal'}`);
+    console.log(`Tier 2 ($50-$100): ${bestDeals.tier2 ? bestDeals.tier2.name + ' (-' + Math.abs(bestDeals.tier2.discount).toFixed(1) + '%)' : 'Keeping previous deal'}`);
+    console.log(`Tier 3 ($100+): ${bestDeals.tier3 ? bestDeals.tier3.name + ' (-' + Math.abs(bestDeals.tier3.discount).toFixed(1) + '%)' : 'Keeping previous deal'}`);
 
-    // Save the finalized payload to Firebase
-    await db.collection("system_config").doc("daily_deals").set({
-      ...bestDeals,
-      lastUpdated: admin.firestore.FieldValue.serverTimestamp()
-    });
+    // 🚀 NEW: Only update the tiers where we actually found a new deal
+    let payload = { lastUpdated: admin.firestore.FieldValue.serverTimestamp() };
+    if (bestDeals.tier1) payload.tier1 = bestDeals.tier1;
+    if (bestDeals.tier2) payload.tier2 = bestDeals.tier2;
+    if (bestDeals.tier3) payload.tier3 = bestDeals.tier3;
 
-    console.log("\n✅ Payload successfully uploaded to Firebase. Frontend is ready to render.");
+    // Save using MERGE so we don't overwrite previous deals with empty slots
+    await db.collection("system_config").doc("daily_deals").set(payload, { merge: true });
+
+    console.log("\n✅ Payload successfully merged to Firebase. Frontend is ready to render.");
 
   } catch (error) {
     console.error("❌ Critical Sniper Failure:", error);
